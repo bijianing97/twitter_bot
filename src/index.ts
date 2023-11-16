@@ -107,7 +107,6 @@ async function getFollowingNames(
       const newOptions = { ...obj.options };
       newOptions.params.screenname = screenname;
       newOptions.params.cursor = nextCursor;
-      console.log(newOptions);
       const response = await axios.request(newOptions);
       obj.count++;
       const data = response.data;
@@ -170,94 +169,92 @@ async function getFollowingNames(
     lastPull = existedData.lastPull;
   }
   logger.info(`Start twitter bot.`);
-  setInterval(async () => {
-    if (Date.now() - lastPull > callInterval) {
-      const nowMonth = new Date().getMonth();
-      if (nowMonth != lastReset) {
-        logger.info(
-          `Start reset count,time is ${new Date().toLocaleTimeString()}.`
-        );
-        resetCount(followingOptionsWithCountListNow);
-        lastReset = nowMonth;
-        logger.info(
-          `End reset count,time is ${new Date().toLocaleTimeString()}.`
-        );
-      }
+  // setInterval(async () => {
+  if (Date.now() - lastPull > callInterval) {
+    const nowMonth = new Date().getMonth();
+    if (nowMonth != lastReset) {
       logger.info(
-        `Start pull data,time is ${new Date().toLocaleTimeString()}.`
+        `Start reset count,time is ${new Date().toLocaleTimeString()}.`
       );
-      const newData: dataType = {
-        followingOptionsWithCountList: followingOptionsWithCountListNow,
-        lastReset: lastReset,
-        lastPull: lastPull,
-        accoutToFollowingData: [],
-      };
-      const newFollowing = new Map<string, sendFollowingDataType[]>();
-      for (let i = 0; i < twitterNames.length; i++) {
-        logger.info(`Start get following names of ${twitterNames[i]}.`);
-        const followingResults = await getFollowingNames(
-          twitterNames[i],
-          followingOptionsWithCountListNow,
-          "",
-          []
+      resetCount(followingOptionsWithCountListNow);
+      lastReset = nowMonth;
+      logger.info(
+        `End reset count,time is ${new Date().toLocaleTimeString()}.`
+      );
+    }
+    logger.info(`Start pull data,time is ${new Date().toLocaleTimeString()}.`);
+    const newData: dataType = {
+      followingOptionsWithCountList: followingOptionsWithCountListNow,
+      lastReset: lastReset,
+      lastPull: lastPull,
+      accoutToFollowingData: [],
+    };
+    const newFollowing = new Map<string, sendFollowingDataType[]>();
+    for (let i = 0; i < twitterNames.length; i++) {
+      logger.info(`Start get following names of ${twitterNames[i]}.`);
+      const followingResults = await getFollowingNames(
+        twitterNames[i],
+        followingOptionsWithCountListNow,
+        "",
+        []
+      );
+      console.log(followingResults.length);
+      if (existedData) {
+        const oldFollowingResults = existedData.accoutToFollowingData.find(
+          (obj) => obj.account === twitterNames[i]
+        )?.following;
+        const newFollowings = followingResults.filter(
+          (objNew) =>
+            !oldFollowingResults?.find(
+              (onjOld) => onjOld.user_id === objNew.user_id
+            )
         );
-        console.log(followingResults.length);
-        if (existedData) {
-          const oldFollowingResults = existedData.accoutToFollowingData.find(
-            (obj) => obj.account === twitterNames[i]
-          )?.following;
-          const newFollowings = followingResults.filter(
-            (objNew) =>
-              !oldFollowingResults?.find(
-                (onjOld) => onjOld.user_id === objNew.user_id
-              )
-          );
-          const newFollowingData: sendFollowingDataType[] = newFollowings.map(
-            (obj) => {
-              return {
-                name: obj.name,
-                screen_name: obj.screen_name,
-                link: `https://twitter.com/${obj.screen_name}`,
-                description: obj.description,
-              };
-            }
-          );
-          if (newFollowingData.length > 0) {
-            newFollowing.set(twitterNames[i], newFollowingData);
+        const newFollowingData: sendFollowingDataType[] = newFollowings.map(
+          (obj) => {
+            return {
+              name: obj.name,
+              screen_name: obj.screen_name,
+              link: `https://twitter.com/${obj.screen_name}`,
+              description: obj.description,
+            };
           }
+        );
+        if (newFollowingData.length > 0) {
+          newFollowing.set(twitterNames[i], newFollowingData);
         }
-        newData.accoutToFollowingData.push({
-          account: twitterNames[i],
-          following: followingResults,
-        });
       }
-      // discord todo
-      if (newFollowing.size > 0) {
-        logger.info(`New following:${newFollowing}`);
-        newFollowing.forEach((value, key) => {
-          channel!.send(
-            `## ${twitterNamesToRealNames[key]}的新关注:\n
+      newData.accoutToFollowingData.push({
+        account: twitterNames[i],
+        following: followingResults,
+      });
+    }
+    // discord todo
+    if (newFollowing.size > 0) {
+      logger.info(`New following:${newFollowing}`);
+      newFollowing.forEach((value, key) => {
+        channel!.send(
+          `## ${twitterNamesToRealNames[key]}的新关注:\n
           ${value
             .map(
               (obj) =>
                 `> * ${obj.name} \n > * ${obj.link} \n > * ${obj.description} \n`
             )
             .join("\n")}`
-          );
-        });
-      } else {
-        logger.info(`No new following.`);
-        channel!.send(`## 过去24小时没有新关注`);
-      }
-
-      lastPull = Date.now();
-      newData.lastPull = lastPull;
-      lastReset = new Date().getMonth();
-      newData.lastReset = lastReset;
-      newData.followingOptionsWithCountList = followingOptionsWithCountListNow;
-      saveDataToFile(newData);
-      logger.info(`End pull data,time is ${new Date().toLocaleTimeString()}.`);
+        );
+      });
+    } else {
+      logger.info(`No new following.`);
+      channel!.send(`## 过去24小时没有新关注`);
     }
-  }, 40 * 60 * 1000);
+
+    lastPull = Date.now();
+    newData.lastPull = lastPull;
+    lastReset = new Date().getMonth();
+    newData.lastReset = lastReset;
+    newData.followingOptionsWithCountList = followingOptionsWithCountListNow;
+    saveDataToFile(newData);
+    logger.info(`End pull data,time is ${new Date().toLocaleTimeString()}.`);
+  }
+  // }, 40 * 60 * 1000);
   await client.destroy();
 })();
