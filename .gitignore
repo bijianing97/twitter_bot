@@ -1,0 +1,5 @@
+.env
+data.json
+test.ts
+node_modules/
+package-lock.json
