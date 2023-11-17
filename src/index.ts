@@ -13,7 +13,7 @@ import {
 
 const filePath = path.join(__dirname, "data.json");
 
-const callInterval = 0.5 * 24 * 60 * 60 * 1000;
+const callInterval = 6 * 60 * 60 * 1000;
 
 type followingDataType = {
   user_id: string;
@@ -150,12 +150,6 @@ async function getFollowingNames(
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
   });
   await client.login(process.env.bot_token);
-  const channelId = process.env.channel_id as string;
-  let channel: TextChannel | undefined = undefined;
-  while (channel == undefined) {
-    channel = client.channels.cache.get(channelId) as TextChannel;
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  }
 
   const existedData = loadDataFromFile();
 
@@ -231,6 +225,12 @@ async function getFollowingNames(
         });
       }
       // discord todo
+      const channelId = process.env.channel_id as string;
+      let channel: TextChannel | undefined = undefined;
+      while (channel == undefined) {
+        channel = client.channels.cache.get(channelId) as TextChannel;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
       if (newFollowing.size > 0) {
         logger.info(`New following:${newFollowing}`);
         newFollowing.forEach((value, key) => {
@@ -248,6 +248,7 @@ async function getFollowingNames(
         logger.info(`No new following.`);
         channel!.send(`## 过去24小时没有新关注`);
       }
+      await client.destroy();
 
       lastPull = Date.now();
       newData.lastPull = lastPull;
@@ -259,6 +260,5 @@ async function getFollowingNames(
     } else {
       logger.info("Not time, no need to pull data.");
     }
-  }, 30 * 60 * 1000);
-  await client.destroy();
+  }, 10 * 60 * 1000);
 })();
