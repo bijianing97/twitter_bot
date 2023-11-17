@@ -256,6 +256,8 @@ async function getFollowingNames(
       newData.followingOptionsWithCountList = followingOptionsWithCountListNow;
       saveDataToFile(newData);
       logger.info(`End pull data,time is ${new Date().toLocaleTimeString()}.`);
+    } else {
+      logger.info("Not time, no need to pull data.");
     }
   }, 30 * 60 * 1000);
   await client.destroy();
