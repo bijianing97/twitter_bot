@@ -13,7 +13,7 @@ import {
 
 const filePath = path.join(__dirname, "data.json");
 
-const callInterval = 6 * 60 * 60 * 1000;
+const callInterval = 8 * 60 * 60 * 1000;
 
 type followingDataType = {
   user_id: string;
@@ -98,7 +98,6 @@ async function getFollowingNames(
   interruptCursor: string,
   interruptFollowingResults: followingDataType[]
 ): Promise<followingDataType[]> {
-  logger.info(`start function  ${screenname}.`);
   let followingResults: followingDataType[] = interruptFollowingResults;
   let nextCursor = interruptCursor;
   try {
@@ -256,7 +255,7 @@ async function getFollowingNames(
         });
       } else {
         logger.info(`No new following.`);
-        channel!.send(`## 过去6小时没有新关注`);
+        channel!.send(`## 过去8小时没有新关注`);
       }
       await client.destroy();
 
