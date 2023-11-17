@@ -109,7 +109,17 @@ async function getFollowingNames(
       newOptions.params.cursor = nextCursor;
       const response = await axios.request(newOptions);
       obj.count++;
-      const data = response.data;
+      let data = response.data;
+      while (data.following.length === 0) {
+        console.log("following length is zero ,Retry");
+        const retryObj = findMinCountOptions(followingOptionsWithCountListNow);
+        const retryOptions = { ...retryObj.options };
+        retryOptions.params.screenname = screenname;
+        retryOptions.params.cursor = newOptions.params.cursor;
+        const retryResponse = await axios.request(retryOptions);
+        data = retryResponse.data;
+        retryObj.count++;
+      }
       followingResults = followingResults.concat(data.following);
       logger.info(`followingResults.length:${followingResults.length}`);
       nextCursor = data.next_cursor;
@@ -246,7 +256,7 @@ async function getFollowingNames(
         });
       } else {
         logger.info(`No new following.`);
-        channel!.send(`## 过去24小时没有新关注`);
+        channel!.send(`## 过去6小时没有新关注`);
       }
       await client.destroy();
 
