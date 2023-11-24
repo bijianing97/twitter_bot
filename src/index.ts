@@ -242,8 +242,8 @@ async function getFollowingNames(
       }
       if (newFollowing.size > 0) {
         logger.info(`New following:${newFollowing}`);
-        newFollowing.forEach((value, key) => {
-          channel!.send(
+        newFollowing.forEach(async (value, key) => {
+          await channel!.send(
             `## ${twitterNamesToRealNames[key]}的新关注:\n
           ${value
             .map(
@@ -255,7 +255,7 @@ async function getFollowingNames(
         });
       } else {
         logger.info(`No new following.`);
-        channel!.send(`## 过去8小时没有新关注`);
+        await channel!.send(`## 过去8小时没有新关注`);
       }
       await client.destroy();
 
