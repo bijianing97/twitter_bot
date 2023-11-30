@@ -236,7 +236,7 @@ async function getFollowingNames(
       // discord todo
       const channelId = process.env.channel_id as string;
       let channel: TextChannel | undefined = undefined;
-      while (channel == undefined) {
+      while (channel === undefined) {
         channel = client.channels.cache.get(channelId) as TextChannel;
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
@@ -269,5 +269,5 @@ async function getFollowingNames(
     } else {
       logger.info("Not time, no need to pull data.");
     }
-  }, 10 * 60 * 1000);
+  }, 30 * 60 * 1000);
 })();
